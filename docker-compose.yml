@@ -1,0 +1,7 @@
+services:
+  titanic-ml:
+    image: onecall/titanic-ml:20250916-v4
+    env_file:
+      - .env
+    volumes:
+      - ./gcp_auth.json:/app/gcp_auth.json
