@@ -1,6 +1,6 @@
 services:
   titanic-ml:
-    image: onecall/titanic-ml:20250916-v4
+    image: onecall/mytest:v2
     env_file:
       - .env
     volumes:

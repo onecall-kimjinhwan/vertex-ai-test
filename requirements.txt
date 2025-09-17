@@ -9,3 +9,4 @@ fsspec>=2023.1.0
 gcsfs>=2023.1.0
 google-cloud-aiplatform>=1.38.0
 python-dotenv>=1.0.0
+joblib>=1.2.0

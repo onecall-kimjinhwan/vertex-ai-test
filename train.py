@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import numpy as np
+import joblib
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -49,9 +50,14 @@ def evaluate_model(model, X_test, y_test, features):
 
     return accuracy, report, importance_df
 
-def save_model_info(filename, accuracy, report, importance_df, X_train, X_test, df, features, model):
-    print("모델 정보 저장 중...")
-
+def save_model_and_info(model, model_filename, info_filename, accuracy, report, importance_df, X_train, X_test, df, features):
+    print("모델 및 정보 저장 중...")
+    
+    # 모델 저장 (joblib 사용)
+    joblib.dump(model, model_filename)
+    print(f"모델 저장 완료: {model_filename}")
+    
+    # 모델 정보 저장
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     content = f"""
 Titanic Survival Prediction Model
@@ -79,8 +85,9 @@ Titanic Survival Prediction Model
 {report}
 """
 
-    with open(filename, 'w', encoding='utf-8') as f:
+    with open(info_filename, 'w', encoding='utf-8') as f:
         f.write(content)
+    print(f"모델 정보 저장 완료: {info_filename}")
 
 def log_section(title):
     print(f"\n========== {title} ==========")
@@ -114,12 +121,26 @@ print(f"정확도: {accuracy:.4f}")
 print("\n분류 보고서:\n", report)
 print("\n특성 중요도:\n", importance_df)
 
-log_section("모델 정보 저장 및 업로드")
-save_model_info(MODEL_FILENAME, accuracy, report, importance_df, X_train, X_test, df, features, model)
+log_section("모델 및 정보 저장 및 업로드")
 
-gcs_model_path = os.path.join(GCS_MODEL_DIR, MODEL_FILENAME)
-upload_to_gcs(GCS_BUCKET, MODEL_FILENAME, gcs_model_path)
-print(f"업로드 완료: gs://{GCS_BUCKET}/{gcs_model_path}")
+# 파일명 설정
+model_filename = "titanic_model.pkl"
+info_filename = "model_info.txt"
 
-os.remove(MODEL_FILENAME)
+# 모델과 정보 저장
+save_model_and_info(model, model_filename, info_filename, accuracy, report, importance_df, X_train, X_test, df, features)
+
+# GCS에 모델 업로드
+gcs_model_path = os.path.join(GCS_MODEL_DIR, model_filename)
+upload_to_gcs(GCS_BUCKET, model_filename, gcs_model_path)
+print(f"모델 업로드 완료: gs://{GCS_BUCKET}/{gcs_model_path}")
+
+# GCS에 모델 정보 업로드
+gcs_info_path = os.path.join(GCS_MODEL_DIR, info_filename)
+upload_to_gcs(GCS_BUCKET, info_filename, gcs_info_path)
+print(f"모델 정보 업로드 완료: gs://{GCS_BUCKET}/{gcs_info_path}")
+
+# 로컬 임시 파일 삭제
+os.remove(model_filename)
+os.remove(info_filename)
 print("로컬 임시 파일 삭제 완료.")
